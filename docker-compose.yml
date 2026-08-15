@@ -1,0 +1,108 @@
+services:
+  # ---------- Zookeeper ----------
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  # ---------- Kafka ----------
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # 9092 = acces depuis ta machine Windows / 29092 = acces interne entre conteneurs
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  # ---------- Spark Master (image officielle Apache) ----------
+  spark-master:
+    image: apache/spark:3.5.1-python3
+    container_name: spark-master
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+    ports:
+      - "8086:8080"   # UI Spark
+      - "7077:7077"
+    volumes:
+      - ./spark:/app
+
+  # ---------- Spark Worker (image officielle Apache) ----------
+  spark-worker:
+    image: apache/spark:3.5.1-python3
+    container_name: spark-worker
+    depends_on:
+      - spark-master
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+    volumes:
+      - ./spark:/app
+
+  # ---------- PostgreSQL ----------
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: recruitment
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+
+  # ---------- pgAdmin ----------
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: pgadmin
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+
+  # ---------- Airflow (orchestration du pipeline) ----------
+  airflow:
+    build: ./airflow
+    container_name: airflow
+    depends_on:
+      - kafka
+      - postgres
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/dags
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/jobs:/opt/airflow/jobs
+      - airflow_home:/opt/airflow
+      # IMPORTANT : monte ton dossier dataset (adapte le chemin si besoin)
+      - C:\Users\pc\Desktop\jobs:/data
+    ports:
+      - "8085:8080"     # interface web Airflow
+    command: standalone
+
+volumes:
+  pgdata:
+  airflow_home:

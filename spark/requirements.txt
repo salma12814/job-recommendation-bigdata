@@ -1,0 +1,3 @@
+# Pour les jobs Spark, PySpark est deja inclus dans l'image bitnami/spark.
+# Ce fichier sert seulement si tu veux lancer Spark en local hors Docker.
+pyspark==3.5.0

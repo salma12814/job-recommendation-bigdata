@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recherche par offre</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; color: #222; }
+    h1 { color: #1d4ed8; }
+    nav a { margin-right: 20px; text-decoration: none; color: #1d4ed8; font-weight: bold; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    .score { float: right; background: #1d4ed8; color: #fff; padding: 2px 10px; border-radius: 12px; font-size: 13px; }
+    .skills { color: #555; font-size: 14px; margin-top: 6px; }
+    textarea { width: 100%; height: 120px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
+    button { background: #1d4ed8; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 15px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/">Upload CV</a>
+    <a href="/offre">Recherche par offre</a>
+  </nav>
+  <h1>Recherche d'offres / profils proches d'une offre</h1>
+  <p>Colle le texte d'une offre, le systeme retourne les 5 offres les plus similaires.</p>
+
+  <form method="POST">
+    <textarea name="offer_text" placeholder="Colle ici la description de l'offre...">{{ offer_text }}</textarea>
+    <br>
+    <button type="submit">Rechercher</button>
+  </form>
+
+  {% if results %}
+    <h2>Top 5 resultats</h2>
+    {% for job in results %}
+      <div class="card">
+        <span class="score">score {{ job.score }}</span>
+        <strong>{{ job.title }}</strong><br>
+        {{ job.company_name }} — {{ job.location }}<br>
+        {% if job.med_salary %}<span>Salaire median : {{ job.med_salary }}</span><br>{% endif %}
+        <div class="skills">Skills : {{ job.skills }}</div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</body>
+</html>
