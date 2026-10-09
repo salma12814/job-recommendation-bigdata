@@ -1,8 +1,6 @@
 # Analyse des offres d'emploi IT et recommandation de candidats
 
-Projet Big Data temps reel inspire de
-[Hamza88-coder/Real-Time-Recruitment-System](https://github.com/Hamza88-coder/Real-Time-Recruitment-System-with-AI-and-Data-Analytics),
-version simplifiee (sans Ray, Databricks, Snowflake, Delta Lake, Pinecone, FAISS, Redis, NiFi).
+(sans Ray, Databricks, Snowflake, Delta Lake, Pinecone, FAISS, Redis, NiFi).
 
 ## Problematique
 Peut-on recommander automatiquement les meilleures offres a un candidat a partir
